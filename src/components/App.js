@@ -45,20 +45,30 @@ function App() {
 
   // Function to update a question's answer
   function handleUpdateQuestion(id, correctIndex) {
-    fetch(`http://localhost:4000/questions/${id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ correctIndex }),
-    })
-      .then((response) => response.json())
-      .then((updatedQuestion) => {
-        setQuestions(questions.map(question => 
-          question.id === id ? updatedQuestion : question
-        ));
-      });
-  }
+  // Convert to number immediately
+  const newCorrectIndex = parseInt(correctIndex);
+  
+  // Optimistically update the UI first for immediate feedback
+  setQuestions(questions.map(question => 
+    question.id === id ? { ...question, correctIndex: newCorrectIndex } : question
+  ));
+
+  // Then send to server
+  fetch(`http://localhost:4000/questions/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ correctIndex: newCorrectIndex }),
+  })
+    .then((response) => response.json())
+    .then((updatedQuestion) => {
+      // Sync with server response
+      setQuestions(questions.map(question => 
+        question.id === id ? updatedQuestion : question
+      ));
+    });
+}
 
   return (
     <main>
